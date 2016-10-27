@@ -9,8 +9,11 @@ import java.io.FileReader;
 import javax.swing.*;
 
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 class HelloSwing extends JFrame {
@@ -19,13 +22,33 @@ class HelloSwing extends JFrame {
 	 */
 	private static final long serialVersionUID = -4464998464680176802L;
 
+	private Container thisContainer;
+
 	public HelloSwing(String title) {
 		super(title);
+		setResizable(false);
+		thisContainer = getContentPane();
+
 		display();
+
+		this.invalidate();
+	}
+
+	public void updateImage(String fileName) {
+		Image image = Toolkit.getDefaultToolkit().createImage(fileName);
+		MediaTracker t = new MediaTracker(this);
+		t.addImage(image, 1);
+		try {
+			t.waitForAll();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		thisContainer.getGraphics().drawImage(image, 0, 0, null);
 	}
 
 	public void display() {
-		Container cpane;
 		JMenuBar mb = new JMenuBar();
 		JMenu menu;
 		JMenuItem open = new JMenuItem("Open");
@@ -34,6 +57,7 @@ class HelloSwing extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				System.out.println("'Open' clicked");
 				JFileChooser chooser = new JFileChooser();
+				chooser.setCurrentDirectory(new File("D:\\"));
 				int returnVal = chooser.showOpenDialog(null);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					BMemParser parser = new BMemParser();
@@ -54,17 +78,34 @@ class HelloSwing extends JFrame {
 								try {
 									int freeMem = Integer.parseInt(free);
 									// TODO: add freeMem to draw Graph
-									dataset.addValue(freeMem, "Free BMem", "" + count++ );
-
+									dataset.addValue(freeMem, "Free BMem", "" + count++);
 								} catch (Exception ex) {
 								}
 							}
 						}
 						JFreeChart chart = ChartFactory.createLineChart("MEM", "time", "byte", dataset);
+						// Axis
+						ValueAxis axis = (ValueAxis) chart.getCategoryPlot().getRangeAxis();
+
+						axis.setRange(22500000, 23500000);
+
+						CategoryAxis daxis = (CategoryAxis) chart.getCategoryPlot().getDomainAxis();
+						daxis.setAttributedLabel("test");
+
 						chart.setBackgroundPaint(java.awt.Color.white);
 						chart.setTitle(f.getName());
-						File outFile = new File(f.getName()+".jpg");
+
+						ChartPanel chartPanel = new ChartPanel(chart);
+						chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+						thisContainer.add(chartPanel);
+						thisContainer.invalidate();
+
+						// setContentPane(chartPanel);
+
+						File outFile = new File(f.getName() + ".jpg");
 						ChartUtilities.saveChartAsPNG(outFile, chart, 1280, 720);
+
+						updateImage(f.getName() + ".jpg");
 						System.out.println("DONE:" + count + " memory logs");
 					} catch (Exception ex) {
 						ex.printStackTrace();
@@ -110,7 +151,7 @@ class HelloSwing extends JFrame {
 			}
 		});
 		hs.pack();
-		hs.setSize(300, 200);
+		hs.setSize(960, 540);
 		hs.setVisible(true);
 	}
 }
